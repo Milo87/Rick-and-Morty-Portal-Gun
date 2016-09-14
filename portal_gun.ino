@@ -3,9 +3,9 @@
 #include "Adafruit_GFX.h"
 
 enum PinAssignments {
-	encoderPinA = 2,
-	encoderPinB = 3,
-	 projectButton = 8
+	encoderPinA = 4,
+	encoderPinB = 5,
+	projectButton = 6
 };
 
 volatile unsigned int encoderPos = 0;
@@ -113,7 +113,7 @@ void loop() {
 		lastReportedPos = encoderPos;
 	}
 
-	// TODO: The project button is tied to input 8, so once we've worked out what we're doing, tie it together.
+	// TODO: The project button is tied to a digital pin, so once we've worked out what we're doing, tie it together.
 	if(digitalRead(projectButton) == HIGH) {
 		ProjectImage();
 	}
