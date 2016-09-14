@@ -36,19 +36,19 @@ long dimensionlist[] = {
 void SetDisplay(Adafruit_7segment matrix, int seed) {
 	// We want each position on the rotator to give us the same (random) result.
 	// So if you click right to get a new value, then click back left, you should get the previous result.
-	RandomSeed(seed);
+	randomSeed(seed);
 
 	int arraylength = 0;
 
 	// 25% chance to show the home dimension.	
-	if(Random(4) == 0) {
+	if(random(4) == 0) {
 		matrix.print(0xC137, HEX);
 	}
 	// If not, 20% chance to show a random pick
-	else if(Random(5) == 0) {
+	else if(random(5) == 0) {
 		// Calculate the length of the array dynamically...
 		arraylength = sizeof(dimensionlist) / sizeof(long);
-		matrix.print(dimensionlist[Random(0, arraylength)]);
+		matrix.print(dimensionlist[random(0, arraylength)]);
 	}
 	// If still not, just create a random dimension.
 	else {	
@@ -56,10 +56,10 @@ void SetDisplay(Adafruit_7segment matrix, int seed) {
 		arraylength = sizeof(hexcharacters) / sizeof(uint8_t);
 
 		// Write the random dimension name to the display
-		matrix.writeDigitRaw(0, hexcharacters[Random(0, arraylength)]);
-		matrix.writeDigitNum(1, Random(0, 10));
-		matrix.writeDigitNum(3, Random(0, 10));
-		matrix.writeDigitNum(4, Random(0, 10));
+		matrix.writeDigitRaw(0, hexcharacters[random(0, arraylength)]);
+		matrix.writeDigitNum(1, random(0, 10));
+		matrix.writeDigitNum(3, random(0, 10));
+		matrix.writeDigitNum(4, random(0, 10));
 	}
 	
 	// Push whatever we decided on to the display over I2C
@@ -88,7 +88,7 @@ void ProjectImage() {
 	return;
 }
 
-void Setup() {
+void setup() {
 	// Encoder stuff
 	pinMode(encoderPinA, INPUT);
 	pinMode(encoderPinB, INPUT);
