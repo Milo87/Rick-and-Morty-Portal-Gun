@@ -2,9 +2,12 @@
 #include "Adafruit_LEDBackpack.h"
 #include "Adafruit_GFX.h"
 
+// Digital pins 2 and 3 are the only hardware interrupt pins on the UNO. For the micro this will need to changed since
+// the Micro uses 2 and 3 for SDA/SCL for I2C (for driving the 7-seg matrix)
+// For the Uno this isn't a problem since SDA/SCL are on A4 and A5 respectively.
 enum PinAssignments {
-	encoderPinA = 4,
-	encoderPinB = 5,
+	encoderPinA = 2,
+	encoderPinB = 3,
 	projectButton = 6
 };
 
@@ -67,13 +70,17 @@ void SetDisplay(Adafruit_7segment matrix, int seed) {
 }
 
 void doEncoderA() {
+	cli();
 	A_set = digitalRead(encoderPinA) == HIGH;
 	encoderPos += (A_set != B_set) ? +1 : -1;
+	sei();
 }
 
 void doEncoderB() {
+	cli();
 	B_set = digitalRead(encoderPinB) == HIGH;
 	encoderPos += (A_set == B_set) ? +1 : -1;
+	sei();
 }
 
 // At the moment this just returns whatever you give it, but is expandable to whatever algorithm you want
@@ -90,16 +97,12 @@ void ProjectImage() {
 
 void setup() {
 	// Encoder stuff
-	pinMode(encoderPinA, INPUT);
-	pinMode(encoderPinB, INPUT);
+	pinMode(encoderPinA, INPUT_PULLUP);
+	pinMode(encoderPinB, INPUT_PULLUP);
 	pinMode( projectButton, INPUT);
 
-	digitalWrite(encoderPinA, HIGH);
-	digitalWrite(encoderPinB, HIGH);
-	digitalWrite(projectButton, HIGH);
-
-	attachInterrupt(0, doEncoderA, CHANGE);
-	attachInterrupt(1, doEncoderB, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoderA, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(encoderPinB), doEncoderB, CHANGE);
 
 	// Set up our 7-seg matrix
 	matrix.begin(0x70);
