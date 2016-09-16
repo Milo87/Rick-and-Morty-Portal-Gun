@@ -6,13 +6,18 @@
 // the Micro uses 2 and 3 for SDA/SCL for I2C (for driving the 7-seg matrix)
 // For the Uno this isn't a problem since SDA/SCL are on A4 and A5 respectively.
 enum PinAssignments {
-	encoderPinA = 2,
-	encoderPinB = 3,
+	encoderPinA = 0,
+	encoderPinB = 1,
 	projectButton = 6
 };
 
-volatile unsigned int encoderPos = 0;
-unsigned int lastReportedPos = 1;
+volatile byte encoderPos = 0;
+volatile byte lastReportedPos = 0;
+
+volatile byte aFlag = 0;
+volatile byte bFlag = 0;
+
+volatile byte reading = 0;
 
 boolean A_set = false;
 boolean B_set = false;
@@ -70,23 +75,35 @@ void SetDisplay(Adafruit_7segment matrix, int seed) {
 }
 
 void doEncoderA() {
-	cli();
-	A_set = digitalRead(encoderPinA) == HIGH;
-	encoderPos += (A_set != B_set) ? +1 : -1;
-	sei();
+  cli();
+  reading = PIND & 0xC;
+  if (reading == B00001100 && aFlag) {
+    encoderPos--;
+    bFlag = 0;
+    aFlag = 0;
+  } 
+  else if (reading == B00000100) {
+    bFlag = 1;
+  }
+  sei();
 }
 
 void doEncoderB() {
-	cli();
-	B_set = digitalRead(encoderPinB) == HIGH;
-	encoderPos += (A_set == B_set) ? +1 : -1;
-	sei();
-}
+  cli(); //stop interrupts happening before we read pin values
+  reading = PIND & 0xC; //read all eight pin values then strip away all but pinA and pinB's values
+  if (reading == B00001100 && bFlag) { //check that we have both pins at detent (HIGH) and that we are expecting detent on this pin's rising edge
+    encoderPos ++; //increment the encoder's position count
+    bFlag = 0; //reset flags for the next turn
+    aFlag = 0; //reset flags for the next turn
+  }
+  else if (reading == B00001000) aFlag = 1; //signal that we're expecting pinA to signal the transition to detent from free rotation
+    sei(); //restart interrupts
+  }
 
 // At the moment this just returns whatever you give it, but is expandable to whatever algorithm you want
 // to make some random seeds. For this to work it should be deterministic, though.
 int GetNewSeedFromSelector(int input) {
-	return input;
+	return 1000 + input;
 }
 
 void ProjectImage() {
@@ -101,11 +118,13 @@ void setup() {
 	pinMode(encoderPinB, INPUT_PULLUP);
 	pinMode( projectButton, INPUT);
 
-	attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoderA, CHANGE);
-	attachInterrupt(digitalPinToInterrupt(encoderPinB), doEncoderB, CHANGE);
+	attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoderA, RISING);
+	attachInterrupt(digitalPinToInterrupt(encoderPinB), doEncoderB, RISING);
 
 	// Set up our 7-seg matrix
 	matrix.begin(0x70);
+        matrix.print(0x0000, HEX);
+        matrix.writeDisplay();
 }
 
 void loop() {
