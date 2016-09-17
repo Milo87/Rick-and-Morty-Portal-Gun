@@ -8,7 +8,8 @@
 enum PinAssignments {
 	encoderPinA = 0,
 	encoderPinB = 1,
-	projectButton = 6
+	projectButton = 8,
+        projectGatePin = 7
 };
 
 volatile byte encoderPos = 0;
@@ -34,7 +35,7 @@ uint8_t hexcharacters[] = {
 };
 
 long dimensionlist[] = {
-	0x35C,
+	0x035C,
 	0xC500,
 	0xBEEF,
 	0xB00B
@@ -56,7 +57,7 @@ void SetDisplay(Adafruit_7segment matrix, int seed) {
 	else if(random(5) == 0) {
 		// Calculate the length of the array dynamically...
 		arraylength = sizeof(dimensionlist) / sizeof(long);
-		matrix.print(dimensionlist[random(0, arraylength)]);
+		matrix.print(dimensionlist[random(0, arraylength)], HEX);
 	}
 	// If still not, just create a random dimension.
 	else {	
@@ -107,24 +108,32 @@ int GetNewSeedFromSelector(int input) {
 }
 
 void ProjectImage() {
-	// TODO: Actually tie together the projection. Maybe this doesn't need to do anything. We'll probably
-	// end up just hooking up a transistor to illuminate the LEDs.
+	digitalWrite(projectGatePin, HIGH);
 	return;
+}
+
+void StopProjectImage() {
+        digitalWrite(projectGatePin, LOW);
 }
 
 void setup() {
 	// Encoder stuff
 	pinMode(encoderPinA, INPUT_PULLUP);
 	pinMode(encoderPinB, INPUT_PULLUP);
-	pinMode( projectButton, INPUT);
-
+	pinMode(projectButton, INPUT);
+        pinMode(projectGatePin, OUTPUT);
+        digitalWrite(projectGatePin, LOW);
+        
 	attachInterrupt(digitalPinToInterrupt(encoderPinA), doEncoderA, RISING);
 	attachInterrupt(digitalPinToInterrupt(encoderPinB), doEncoderB, RISING);
 
 	// Set up our 7-seg matrix
 	matrix.begin(0x70);
-        matrix.print(0x0000, HEX);
+        matrix.print(0xC137, HEX);
         matrix.writeDisplay();
+        
+        // Debug
+        Serial.begin(9600);
 }
 
 void loop() {
@@ -137,8 +146,13 @@ void loop() {
 
 	// TODO: The project button is tied to a digital pin, so once we've worked out what we're doing, tie it together.
 	if(digitalRead(projectButton) == HIGH) {
+                Serial.println("HIGH");
 		ProjectImage();
 	}
+        else {
+                StopProjectImage();
+                Serial.println("LOW");
+        }
 }
 
 
